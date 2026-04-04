@@ -59,9 +59,28 @@ public class SecurityConfiguration {
         org.springframework.web.cors.CorsConfiguration configuration =
                 new org.springframework.web.cors.CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(java.util.List.of("https://nodepad-react.vercel.app"));
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.List.of("*"));
+        // ✅ FIX 1: use allowedOrigins (NOT patterns)
+        configuration.setAllowedOrigins(java.util.List.of(
+                "https://nodepad-react.vercel.app",
+                "http://localhost:5173"
+        ));
+
+        // ✅ FIX 2: methods
+        configuration.setAllowedMethods(java.util.List.of(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
+        // ✅ FIX 3: explicit headers (NOT "*")
+        configuration.setAllowedHeaders(java.util.List.of(
+                "Authorization",
+                "Content-Type"
+        ));
+
+        // ✅ OPTIONAL but good
+        configuration.setExposedHeaders(java.util.List.of(
+                "Authorization"
+        ));
+
         configuration.setAllowCredentials(true);
 
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
