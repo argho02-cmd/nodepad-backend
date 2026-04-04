@@ -6,6 +6,7 @@ import com.example.loginpage.entity.Rolle;
 import com.example.loginpage.entity.User;
 import com.example.loginpage.entity.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationService {
 
     private final UserRepository repository;
@@ -55,6 +57,7 @@ public class AuthenticationService {
         try {
             mailService.sendVerificationCode(user.getEmail(), user.getDisplayName(), verificationCode);
         } catch (MailException exception) {
+            log.error("Failed to send verification email to {}", user.getEmail(), exception);
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "Failed to send verification email. Check your mail configuration."
