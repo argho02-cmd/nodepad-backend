@@ -27,29 +27,29 @@ public class SecurityConfiguration {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
+
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // ✅ Allow auth endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/health",
-                                "/error",
-                                "/",
-                                "/index.html",
-                                "/assets/**",
-                                "/static/**",
-                                "/*.js",
-                                "/*.css",
-                                "/favicon.ico"
+                                "/error"
                         ).permitAll()
+
                         .anyRequest().authenticated()
                 )
+
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-}
