@@ -1,39 +1,54 @@
 package com.example.loginpage.auth;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 @Service
-@RequiredArgsConstructor
 public class MailService {
 
-    private final JavaMailSender mailSender;
+    private final RestClient restClient = RestClient.builder()
+            .baseUrl("https://api.resend.com")
+            .build();
 
     @Value("${app.mail.from}")
     private String fromAddress;
 
-    @Value("${spring.mail.username:}")
-    private String mailUsername;
+    @Value("${app.mail.resend.api-key:}")
+    private String resendApiKey;
 
     public boolean isConfigured() {
-        return mailUsername != null && !mailUsername.isBlank()
+        return resendApiKey != null && !resendApiKey.isBlank()
                 && fromAddress != null && !fromAddress.isBlank();
     }
 
     public void sendVerificationCode(String recipientEmail, String username, String verificationCode) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(recipientEmail);
-        message.setSubject("Your verification code");
-        message.setText(String.format(
-                "Hello %s,%n%nYour verification code is: %s%n%nThis code expires in 10 minutes.%n",
-                username,
-                verificationCode
-        ));
+        var requestBody = new ResendEmailRequest(
+                fromAddress,
+                recipientEmail,
+                "Your verification code",
+                String.format(
+                        "Hello %s,%n%nYour verification code is: %s%n%nThis code expires in 10 minutes.%n",
+                        username,
+                        verificationCode
+                )
+        );
 
-        mailSender.send(message);
+        restClient.post()
+                .uri("/emails")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + resendApiKey)
+                .body(requestBody)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private record ResendEmailRequest(
+            String from,
+            String to,
+            String subject,
+            String text
+    ) {
     }
 }

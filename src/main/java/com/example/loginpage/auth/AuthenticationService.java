@@ -8,7 +8,6 @@ import com.example.loginpage.entity.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,7 +37,7 @@ public class AuthenticationService {
         if (!mailService.isConfigured()) {
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Email sending is not configured. Set MAIL_USERNAME, MAIL_PASSWORD and MAIL_FROM first."
+                    "Email sending is not configured. Set RESEND_API_KEY and MAIL_FROM first."
             );
         }
 
@@ -56,11 +55,11 @@ public class AuthenticationService {
 
         try {
             mailService.sendVerificationCode(user.getEmail(), user.getDisplayName(), verificationCode);
-        } catch (MailException exception) {
+        } catch (Exception exception) {
             log.error("Failed to send verification email to {}", user.getEmail(), exception);
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Failed to send verification email. Check your mail configuration."
+                    "Failed to send verification email. Check your Resend configuration."
             );
         }
 
