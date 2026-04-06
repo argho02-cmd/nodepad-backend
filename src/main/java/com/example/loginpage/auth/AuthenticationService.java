@@ -37,7 +37,7 @@ public class AuthenticationService {
         if (!mailService.isConfigured()) {
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Email sending is not configured. Set BREVO_API_KEY or RESEND_API_KEY and MAIL_FROM first."
+                    "Email sending is not configured. Set BREVO_API_KEY and MAIL_FROM first."
             );
         }
 

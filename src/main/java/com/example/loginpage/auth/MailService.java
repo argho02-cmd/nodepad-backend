@@ -8,10 +8,6 @@ import org.springframework.web.client.RestClient;
 @Service
 public class MailService {
 
-    private final RestClient resendClient = RestClient.builder()
-            .baseUrl("https://api.resend.com")
-            .build();
-
     private final RestClient brevoClient = RestClient.builder()
             .baseUrl("https://api.brevo.com/v3")
             .build();
@@ -19,25 +15,15 @@ public class MailService {
     @Value("${app.mail.from}")
     private String fromAddress;
 
-    @Value("${app.mail.resend.api-key:}")
-    private String resendApiKey;
-
     @Value("${app.mail.brevo.api-key:}")
     private String brevoApiKey;
 
     public boolean isConfigured() {
-        return fromAddress != null && !fromAddress.isBlank()
-                && (isBrevoConfigured() || isResendConfigured());
+        return fromAddress != null && !fromAddress.isBlank() && isBrevoConfigured();
     }
 
     public String getActiveProviderName() {
-        if (isBrevoConfigured()) {
-            return "Brevo";
-        }
-        if (isResendConfigured()) {
-            return "Resend";
-        }
-        return "email provider";
+        return "Brevo";
     }
 
     public void sendVerificationCode(String recipientEmail, String username, String verificationCode) {
@@ -47,25 +33,15 @@ public class MailService {
                 verificationCode
         );
 
-        if (isBrevoConfigured()) {
-            sendWithBrevo(recipientEmail, username, messageBody);
-            return;
+        if (!isBrevoConfigured()) {
+            throw new IllegalStateException("No email provider configured");
         }
 
-        if (isResendConfigured()) {
-            sendWithResend(recipientEmail, messageBody);
-            return;
-        }
-
-        throw new IllegalStateException("No email provider configured");
+        sendWithBrevo(recipientEmail, username, messageBody);
     }
 
     private boolean isBrevoConfigured() {
         return brevoApiKey != null && !brevoApiKey.isBlank();
-    }
-
-    private boolean isResendConfigured() {
-        return resendApiKey != null && !resendApiKey.isBlank();
     }
 
     private void sendWithBrevo(String recipientEmail, String username, String messageBody) {
@@ -80,23 +56,6 @@ public class MailService {
                 .uri("/smtp/email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("api-key", brevoApiKey)
-                .body(requestBody)
-                .retrieve()
-                .toBodilessEntity();
-    }
-
-    private void sendWithResend(String recipientEmail, String messageBody) {
-        var requestBody = new ResendEmailRequest(
-                fromAddress,
-                recipientEmail,
-                "Your verification code",
-                messageBody
-        );
-
-        resendClient.post()
-                .uri("/emails")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + resendApiKey)
                 .body(requestBody)
                 .retrieve()
                 .toBodilessEntity();
@@ -119,14 +78,6 @@ public class MailService {
     private record BrevoRecipient(
             String email,
             String name
-    ) {
-    }
-
-    private record ResendEmailRequest(
-            String from,
-            String to,
-            String subject,
-            String text
     ) {
     }
 }
