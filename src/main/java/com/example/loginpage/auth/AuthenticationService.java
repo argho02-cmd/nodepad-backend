@@ -37,7 +37,7 @@ public class AuthenticationService {
         if (!mailService.isConfigured()) {
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Email sending is not configured. Set RESEND_API_KEY and MAIL_FROM first."
+                    "Email sending is not configured. Set BREVO_API_KEY or RESEND_API_KEY and MAIL_FROM first."
             );
         }
 
@@ -56,10 +56,15 @@ public class AuthenticationService {
         try {
             mailService.sendVerificationCode(user.getEmail(), user.getDisplayName(), verificationCode);
         } catch (Exception exception) {
-            log.error("Failed to send verification email to {}", user.getEmail(), exception);
+            log.error(
+                    "Failed to send verification email to {} using {}",
+                    user.getEmail(),
+                    mailService.getActiveProviderName(),
+                    exception
+            );
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Failed to send verification email. Check your Resend configuration."
+                    "Failed to send verification email. Check your email provider configuration."
             );
         }
 
